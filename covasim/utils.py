@@ -90,6 +90,20 @@ def compute_trans_sus(rel_trans,  rel_sus,    inf,       sus,       beta_layer, 
     return rel_trans, rel_sus
 
 
+@nb.njit(            (nbfloat[:], nbfloat[:], nbbool[:], nbbool[:], nbbool[:], nbbool[:], nbbool[:], nbfloat,      nbfloat,    nbfloat,     nbfloat[:]), cache=cache, parallel=safe_parallel)
+def compute_trans_sus_dose_response(rel_trans,  rel_sus,    inf,       sus,       symp,      iso,      quar,      asymp_factor, iso_factor, quar_factor, immunity_factors): # pragma: no cover
+    ''' 
+    Calculate relative transmissibility and susceptibility for dose-response model.
+    This excludes beta_layer and viral_load which are handled by the dose-response function.
+    '''
+    f_asymp   =  symp + ~symp * asymp_factor # Asymptomatic factor
+    f_iso     = ~iso  +  iso  * iso_factor # Isolation factor
+    f_quar    = ~quar +  quar * quar_factor # Quarantine factor
+    rel_trans = rel_trans * inf * f_quar * f_asymp * f_iso # NO beta_layer or viral_load
+    rel_sus   = rel_sus * sus * f_quar * (1-immunity_factors) # Susceptibility
+    return rel_trans, rel_sus
+
+
 @nb.njit(             (nbfloat,  nbint[:],  nbint[:], nbfloat[:],   nbfloat[:], nbfloat[:], nbbool), cache=cache, parallel=rand_parallel)
 def compute_infections(beta,     p1,        p2,       layer_betas,  rel_trans,  rel_sus,    legacy=False): # pragma: no cover
     '''
@@ -126,6 +140,127 @@ def compute_infections(beta,     p1,        p2,       layer_betas,  rel_trans,  
         slist = np.concatenate((slist, source_inds), axis=0)
         tlist = np.concatenate((tlist, target_inds), axis=0)
     return slist, tlist
+
+
+def compute_infections_dose_response(p1, p2, layer_betas, rel_trans, rel_sus,
+                                    dose_model, duration_sampler, viral_load_func,
+                                    people, layer, t, dt=1.0):
+    '''
+    Compute infections using dose-response model.
+    
+    This function replaces beta-based transmission with dose-response calculation:
+    P_dose = 1 - exp(-N/N₀ · I) where N = N_direct + N_indirect
+    
+    IMPORTANT: rel_trans and rel_sus passed here should already have modifiers
+    (f_quar, f_asymp, f_iso) applied but NOT beta_layer or viral_load, as those
+    are replaced by the dose-response calculation.
+    
+    Args:
+        p1: person 1 indices
+        p2: person 2 indices
+        layer_betas: per-contact transmissibilities (not used in dose-response)
+        rel_trans: relative transmissibility with f_quar, f_asymp, f_iso applied
+        rel_sus: relative susceptibility with f_quar and immunity applied
+        dose_model: DoseResponseModel instance
+        duration_sampler: ContactDurationSampler instance
+        viral_load_func: ViralLoadFunction instance
+        people: People object containing agent information
+        layer: current contact layer
+        t: current simulation timestep
+        dt: timestep size in days
+        
+    Returns:
+        source_inds: indices of infectious sources
+        target_inds: indices of newly infected targets
+    '''
+    # Import here to avoid circular imports
+    from . import dose_response as cvdr
+    from . import contact_duration as cvcd
+    from . import viral_dynamics as cvvd
+    
+    # Find infectious contacts (rel_trans > 0 means infectious with modifiers applied)
+    source_trans = rel_trans[p1]
+    inf_inds = source_trans.nonzero()[0]
+    
+    if len(inf_inds) == 0:
+        return np.array([], dtype=cvd.default_int), np.array([], dtype=cvd.default_int)
+    
+    # Get ages if available
+    if hasattr(people, 'age'):
+        ages = people.age
+    else:
+        ages = None
+    
+    # Sample contact durations for infectious contacts
+    n_contacts = len(inf_inds)
+    if ages is not None:
+        ages_i = ages[p1[inf_inds]]
+        ages_j = ages[p2[inf_inds]]
+        durations = duration_sampler.sample_durations_vectorized(
+            layer, n_contacts, ages_i, ages_j
+        )
+    else:
+        durations = duration_sampler.sample_durations_vectorized(
+            layer, n_contacts
+        )
+    
+    # For simplicity, use same duration for direct and indirect
+    # In practice, these could be different
+    direct_durations = durations
+    indirect_durations = durations * 0.5  # Assume indirect exposure is partial
+    
+    # Calculate time since infection for sources
+    t_since_infection = np.zeros(len(people))
+    infectious_inds = people.date_infectious >= 0
+    if infectious_inds.any():
+        t_since_infection[infectious_inds] = t - people.date_infectious[infectious_inds]
+    
+    # Get viral loads using the viral load function
+    viral_loads = np.zeros(len(people))
+    for i in inf_inds:
+        source_idx = p1[i]
+        if t_since_infection[source_idx] > 0:
+            # Check if using HCDViralLoadDatabase
+            if hasattr(viral_load_func, 'get_agent_profile'):
+                # Pass agent_id to get consistent viral load profile
+                viral_loads[source_idx] = viral_load_func.get_viral_load(
+                    t_since_infection[source_idx], 
+                    agent_id=source_idx
+                )
+            else:
+                # Use standard viral load function
+                viral_loads[source_idx] = viral_load_func.get_viral_load(t_since_infection[source_idx])
+    
+    # Compute base dose-response probabilities
+    # Note: viral loads are used here, not as a simple multiplier like in beta model
+    trans_probs = dose_model.compute_dose_response_transmission(
+        p1[inf_inds], p2[inf_inds], viral_loads,
+        direct_durations, indirect_durations,
+        layer, None, None  # Don't pass rel_trans/rel_sus to dose calculation
+    )
+    
+    # Now apply the modifiers that were in rel_trans and rel_sus
+    # rel_trans already has f_quar * f_asymp * f_iso applied
+    # rel_sus already has f_quar * (1-immunity) applied
+    # We need to extract just the modifier parts (not inf or sus flags)
+    source_modifiers = rel_trans[p1[inf_inds]]
+    target_modifiers = rel_sus[p2[inf_inds]]
+    
+    # Apply modifiers to dose-response probabilities
+    # This gives us P_T = P_dose * γ * f_quar * f_asymp * f_iso
+    trans_probs = trans_probs * source_modifiers * target_modifiers
+    
+    # Determine actual transmissions
+    transmissions = (np.random.random(len(trans_probs)) < trans_probs).nonzero()[0]
+    
+    if len(transmissions) > 0:
+        source_inds = p1[inf_inds[transmissions]]
+        target_inds = p2[inf_inds[transmissions]]
+    else:
+        source_inds = np.array([], dtype=np.int32)
+        target_inds = np.array([], dtype=np.int32)
+    
+    return source_inds, target_inds
 
 
 @nb.njit((nbint[:], nbint[:], nb.int64[:]), cache=cache)

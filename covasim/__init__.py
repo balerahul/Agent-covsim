@@ -26,6 +26,9 @@ from .population    import * # Depends on people et al.
 from .interventions import * # Depends on defaults, utils, base
 from .immunity      import * # Depends on utils, parameters, defaults
 from .analysis      import * # Depends on utils, misc, interventions
+from .dose_response import * # Dose-response infection model
+from .viral_dynamics import * # Viral load dynamics
+from .contact_duration import * # Contact duration sampling
 from .sim           import * # Depends on almost everything
 from .run           import * # Depends on sim
 

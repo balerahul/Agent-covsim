@@ -118,6 +118,11 @@ class Sim(cvb.BaseSim):
         self.init_interventions()  # Initialize the interventions...
         self.init_analyzers()  # ...and the analyzers...
         self.validate_layer_pars() # Once the population is initialized, validate the layer parameters again
+        
+        # Initialize dose-response model if enabled
+        if self['use_dose_response']:
+            self.init_dose_response()
+        
         self.set_seed() # Reset the random seed again so the random number stream is consistent
         self.initialized   = True
         self.complete      = False
@@ -125,6 +130,39 @@ class Sim(cvb.BaseSim):
         return self
 
 
+    def init_dose_response(self):
+        '''
+        Initialize dose-response model components if enabled.
+        '''
+        from . import dose_response as cvdr
+        from . import contact_duration as cvcd
+        from . import viral_dynamics as cvvd
+        
+        
+
+        # Initialize dose-response model
+        self.dose_model = cvdr.DoseResponseModel(
+            N0=self['N0'],
+            infectivity_scale=self['infectivity_scale'],
+            deposition_rates_direct=self['deposition_rates_direct'],
+            deposition_rates_indirect=self['deposition_rates_indirect']
+        )
+        
+        # Initialize contact duration sampler
+        self.duration_sampler = cvcd.ContactDurationSampler(
+            duration_config=self['contact_duration_config'],
+            seed=self['rand_seed']
+        )
+        
+        # Initialize viral load function
+        if self['viral_load_function'] is not None:
+            self.viral_load_func = cvvd.create_viral_load_function(self['viral_load_function'])
+        else:
+            # Use default viral load function
+            self.viral_load_func = cvvd.DefaultViralLoad()
+        
+        return
+    
     def layer_keys(self):
         '''
         Attempt to retrieve the current layer keys, in the following order: from
@@ -640,13 +678,41 @@ class Sim(cvb.BaseSim):
                 iso_factor  = cvd.default_float(self['iso_factor'][lkey])
                 quar_factor = cvd.default_float(self['quar_factor'][lkey])
                 beta_layer  = cvd.default_float(self['beta_layer'][lkey])
-                rel_trans, rel_sus = cvu.compute_trans_sus(prel_trans, prel_sus, inf_variant, sus, beta_layer, viral_load, symp, iso, quar, asymp_factor, iso_factor, quar_factor, sus_imm)
+                
+                if self['use_dose_response']:
+                    # For dose-response, compute modifiers without beta_layer and viral_load
+                    rel_trans, rel_sus = cvu.compute_trans_sus_dose_response(
+                        prel_trans, prel_sus, inf_variant, sus, symp, iso, quar, 
+                        asymp_factor, iso_factor, quar_factor, sus_imm
+                    )
+                else:
+                    # For classic model, include all factors
+                    rel_trans, rel_sus = cvu.compute_trans_sus(
+                        prel_trans, prel_sus, inf_variant, sus, beta_layer, viral_load, 
+                        symp, iso, quar, asymp_factor, iso_factor, quar_factor, sus_imm
+                    )
 
                 # Calculate actual transmission
-                pairs = [[p1,p2]] if not self._legacy_trans else [[p1,p2], [p2,p1]] # Support slower legacy method of calculation, but by default skip this loop
-                for p1,p2 in pairs:
-                    source_inds, target_inds = cvu.compute_infections(beta, p1, p2, betas, rel_trans, rel_sus, legacy=self._legacy_trans)  # Calculate transmission!
-                    people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds, layer=lkey, variant=variant)  # Actually infect people
+                if self['use_dose_response']:
+                    # Use dose-response model for transmission
+                    source_inds, target_inds = cvu.compute_infections_dose_response(
+                        p1, p2, betas, rel_trans, rel_sus,
+                        self.dose_model, self.duration_sampler, self.viral_load_func,
+                        people, lkey, t
+                    )
+                    people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds, layer=lkey, variant=variant)
+                    # Assign viral load profiles if using HCDViralLoadDatabase
+                    if hasattr(self.viral_load_func, 'assign_profile'):
+                        for agent_id in target_inds:
+                            # Check if agent doesn't already have a profile
+                            if self.viral_load_func.get_agent_profile(agent_id) is None:
+                                self.viral_load_func.assign_profile(agent_id)
+                else:
+                    # Use classic beta-based transmission
+                    pairs = [[p1,p2]] if not self._legacy_trans else [[p1,p2], [p2,p1]] # Support slower legacy method of calculation, but by default skip this loop
+                    for p1,p2 in pairs:
+                        source_inds, target_inds = cvu.compute_infections(beta, p1, p2, betas, rel_trans, rel_sus, legacy=self._legacy_trans)  # Calculate transmission!
+                        people.infect(inds=target_inds, hosp_max=hosp_max, icu_max=icu_max, source=source_inds, layer=lkey, variant=variant)  # Actually infect people
 
         # Update counts for this time step: stocks
         for key in cvd.result_stocks.keys():

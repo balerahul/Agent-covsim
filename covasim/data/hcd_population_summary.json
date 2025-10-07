@@ -1,0 +1,204 @@
+{
+  "created_at": "2025-08-14T07:42:58.548156Z",
+  "n_subjects_total": 12,
+  "n_successful_fits": 12,
+  "mu_log": {
+    "beta": -17.35927119486982,
+    "gamma": 0.5711569285327734,
+    "p": 2.1141692267000423
+  },
+  "sigma_log_marginal": {
+    "beta": 1.4860788700462493,
+    "gamma": 0.41319463964720393,
+    "p": 1.8568430308423993
+  },
+  "Sigma_log_matrix": [
+    [
+      2.208430417997937,
+      0.2608467174481887,
+      -2.618690046581843
+    ],
+    [
+      0.2608467174481887,
+      0.17072982023318273,
+      -0.29359255826383374
+    ],
+    [
+      -2.618690046581843,
+      -0.29359255826383374,
+      3.447866051187987
+    ]
+  ],
+  "Sigma_log_regularization_jitter": 1e-08,
+  "natural_scale_log_normal_moments": {
+    "beta": {
+      "mean": 8.720048092333281e-08,
+      "sd": 2.4819866712656053e-07
+    },
+    "gamma": {
+      "mean": 1.9280744944639583,
+      "sd": 0.8319149125884889
+    },
+    "p": {
+      "mean": 46.437264321743754,
+      "sd": 256.17736071436383
+    }
+  },
+  "model_constants": {
+    "U0": 117055200.0,
+    "I0": 0.0,
+    "V0": 236.778,
+    "c": 2.4,
+    "V_m": 0.7023
+  },
+  "fitted_subjects": [
+    {
+      "id": 1,
+      "file": "/Users/rahul/data/rahul/Work/drafts/eccomas-2024/data/HCD-Model/1.csv",
+      "log_beta": -17.763098851323573,
+      "log_gamma": 0.8456684281034627,
+      "log_p": 2.196986044444811,
+      "beta": 1.930119450840508e-08,
+      "gamma": 2.3295344205473647,
+      "p": 8.997853459997698,
+      "cost": 34.33403647369417,
+      "nfev": 16
+    },
+    {
+      "id": 2,
+      "file": "/Users/rahul/data/rahul/Work/drafts/eccomas-2024/data/HCD-Model/2.csv",
+      "log_beta": -17.153712866653613,
+      "log_gamma": 0.9799442360455443,
+      "log_p": 1.3663856863298676,
+      "beta": 3.550071972760147e-08,
+      "gamma": 2.6643076654555373,
+      "p": 3.9211527769764447,
+      "cost": 29.625238408324545,
+      "nfev": 20
+    },
+    {
+      "id": 3,
+      "file": "/Users/rahul/data/rahul/Work/drafts/eccomas-2024/data/HCD-Model/3.csv",
+      "log_beta": -18.02575950039929,
+      "log_gamma": 0.37970355119345034,
+      "log_p": 3.1965766896435164,
+      "beta": 1.4842672906995512e-08,
+      "gamma": 1.4618511611606722,
+      "p": 24.448691317543197,
+      "cost": 43.538159025314066,
+      "nfev": 19
+    },
+    {
+      "id": 4,
+      "file": "/Users/rahul/data/rahul/Work/drafts/eccomas-2024/data/HCD-Model/4.csv",
+      "log_beta": -17.776429856681638,
+      "log_gamma": 0.08939633414034344,
+      "log_p": 2.914132005066909,
+      "beta": 1.9045597647842096e-08,
+      "gamma": 1.0935139673708894,
+      "p": 18.43280587485731,
+      "cost": 23.978478616458624,
+      "nfev": 16
+    },
+    {
+      "id": 5,
+      "file": "/Users/rahul/data/rahul/Work/drafts/eccomas-2024/data/HCD-Model/5.csv",
+      "log_beta": -18.592474295491204,
+      "log_gamma": 0.7848357077929755,
+      "log_p": 3.409337701743138,
+      "beta": 8.421530164173486e-09,
+      "gamma": 2.1920467749452532,
+      "p": 30.245206277176383,
+      "cost": 29.72085973065607,
+      "nfev": 19
+    },
+    {
+      "id": 6,
+      "file": "/Users/rahul/data/rahul/Work/drafts/eccomas-2024/data/HCD-Model/6.csv",
+      "log_beta": -12.839026186648786,
+      "log_gamma": 1.2540145252070873,
+      "log_p": -3.1640434158643402,
+      "beta": 2.6551054497243508e-06,
+      "gamma": 3.5043831908248153,
+      "p": 0.042254542512719276,
+      "cost": 70.54125331341707,
+      "nfev": 17
+    },
+    {
+      "id": 7,
+      "file": "/Users/rahul/data/rahul/Work/drafts/eccomas-2024/data/HCD-Model/7.csv",
+      "log_beta": -17.60671778417876,
+      "log_gamma": 0.1595283923474452,
+      "log_p": 2.2791205418774325,
+      "beta": 2.2568340306971404e-08,
+      "gamma": 1.1729575647666746,
+      "p": 9.76808600829293,
+      "cost": 36.09365065739527,
+      "nfev": 16
+    },
+    {
+      "id": 8,
+      "file": "/Users/rahul/data/rahul/Work/drafts/eccomas-2024/data/HCD-Model/8.csv",
+      "log_beta": -17.312175676529385,
+      "log_gamma": 0.27998441309837285,
+      "log_p": 2.4619566709306415,
+      "beta": 3.029825622160112e-08,
+      "gamma": 1.3231091890039395,
+      "p": 11.72773642538409,
+      "cost": 34.55203459175452,
+      "nfev": 19
+    },
+    {
+      "id": 9,
+      "file": "/Users/rahul/data/rahul/Work/drafts/eccomas-2024/data/HCD-Model/9.csv",
+      "log_beta": -17.253179042782754,
+      "log_gamma": 0.2734000408406343,
+      "log_p": 1.3755258844151703,
+      "beta": 3.213953184748648e-08,
+      "gamma": 1.314425963730694,
+      "p": 3.9571571831228156,
+      "cost": 36.104684603638695,
+      "nfev": 16
+    },
+    {
+      "id": 10,
+      "file": "/Users/rahul/data/rahul/Work/drafts/eccomas-2024/data/HCD-Model/10.csv",
+      "log_beta": -17.74130800921129,
+      "log_gamma": 0.024362949923852715,
+      "log_p": 2.069875156651367,
+      "beta": 1.97263997554512e-08,
+      "gamma": 1.0246621514579035,
+      "p": 7.923833818149161,
+      "cost": 18.089135419246045,
+      "nfev": 21
+    },
+    {
+      "id": 11,
+      "file": "/Users/rahul/data/rahul/Work/drafts/eccomas-2024/data/HCD-Model/11.csv",
+      "log_beta": -18.375136705447442,
+      "log_gamma": 0.9537045878913285,
+      "log_p": 3.037080459367323,
+      "beta": 1.046597094170368e-08,
+      "gamma": 2.595306413043605,
+      "p": 20.844298536583334,
+      "cost": 22.700509522629833,
+      "nfev": 18
+    },
+    {
+      "id": 12,
+      "file": "/Users/rahul/data/rahul/Work/drafts/eccomas-2024/data/HCD-Model/12.csv",
+      "log_beta": -17.872235563090104,
+      "log_gamma": 0.8293399758087837,
+      "log_p": 4.22709729579467,
+      "beta": 1.7305602168564233e-08,
+      "gamma": 2.2918055938289963,
+      "p": 68.51805559024025,
+      "cost": 10.516319887065686,
+      "nfev": 23
+    }
+  ],
+  "notes": "Parameters are on log-scale: sample log(theta) ~ N(mu_log, Sigma_log) then theta = exp(log_theta).",
+  "hcd_model_equations": {
+    "text": "Within-host HCD model (state variables U, I, V):\ndU/dt = -beta * U * V\ndI/dt = beta * U * V - gamma * I\ndV/dt = (p / V_m) * I - c * V\nParameters: beta (infection rate), gamma (infected cell clearance), p (virion production scale). Constants: V_m, c, initial conditions U0, I0, V0."
+  }
+}

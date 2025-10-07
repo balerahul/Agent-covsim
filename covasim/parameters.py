@@ -61,6 +61,15 @@ def make_pars(set_prognoses=False, prog_by_age=True, version=None, **kwargs):
     pars['viral_dist']   = dict(frac_time=0.3, load_ratio=2, high_cap=4) # The time varying viral load (transmissibility); estimated from Lescure 2020, Lancet, https://doi.org/10.1016/S1473-3099(20)30200-0
     pars['beta']         = 0.016  # Beta per symptomatic contact; absolute value, calibrated
     pars['asymp_factor'] = 1.0  # Multiply beta by this factor for asymptomatic cases; no statistically significant difference in transmissibility: https://www.sciencedirect.com/science/article/pii/S1201971220302502
+    
+    # Dose-response model parameters
+    pars['use_dose_response']         = False  # Enable dose-response model instead of beta-based transmission
+    pars['N0']                        = 100    # Infectious dose scaling parameter (viral particles)
+    pars['infectivity_scale']         = 1.0    # I parameter in dose-response formula P_dose = 1 - exp(-N/N0 * I)
+    pars['viral_load_function']       = None   # User-supplied viral load function λ(t)
+    pars['deposition_rates_direct']   = None   # Ṅᵛ_direct - viral particle deposition rates for direct contact
+    pars['deposition_rates_indirect'] = None   # Ṅᵛ_indirect - viral particle deposition rates for indirect contact
+    pars['contact_duration_config']   = None   # Configuration for contact duration distributions
 
     # Parameters that control settings and defaults for multi-variant runs
     pars['n_imports']  = 0 # Average daily number of imported cases (actual number is drawn from Poisson distribution)

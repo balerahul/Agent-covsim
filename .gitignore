@@ -4,10 +4,15 @@ docs/modules.rst
 
 # Data files
 data/epi_data
+tmp-files
 
 # Other files
 .idea
 .vscode
+*.png
+Plan.md 
+TODO.md
+.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -121,6 +126,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+local-covasim-env/
 
 # Spyder project settings
 .spyderproject
